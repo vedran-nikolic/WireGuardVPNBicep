@@ -1,0 +1,94 @@
+#
+# Copyright (C) 2022-2023 Lin Song <linsongui@gmail.com>
+
+name: test
+
+on: workflow_call
+
+jobs:
+  test_set_3:
+    if: github.repository_owner == 'vedran-nikolic'
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # 3.1.0
+        with:
+          persist-credentials: false
+      - name: Test
+        run: |
+          set -ex
+
+          mkdir -p /opt/src
+          cd /opt/src
+          ls -ld "$GITHUB_WORKSPACE/wireguard-install.sh"
+
+          export DEBIAN_FRONTEND=noninteractive
+          sudo apt-get -yqq update
+          sudo apt-get -yqq dist-upgrade
+          sudo apt-get -yqq install wget
+
+          cp -f "$GITHUB_WORKSPACE"/wireguard-install.sh ./wireguard.sh
+
+          sudo bash wireguard.sh --auto
+
+          sudo netstat -anpu | grep ':51820'
+          sudo systemctl status wg-quick@wg0
+          ls -ld ~/client.conf
+
+          sudo bash wireguard.sh <<ANSWERS
+          1
+          client2
+
+          ANSWERS
+
+          ls -ld ~/client2.conf
+
+          sudo bash wireguard.sh <<ANSWERS
+          2
+          ANSWERS
+
+          sudo bash wireguard.sh <<ANSWERS | grep -i "2 clients"
+          2
+          ANSWERS
+
+          sudo bash wireguard.sh <<ANSWERS
+          3
+          2
+          y
+          ANSWERS
+
+          ls -ld ~/client2.conf && exit 1
+
+          sudo bash wireguard.sh <<ANSWERS | grep -i "1 client"
+          2
+          ANSWERS
+
+          sudo bash wireguard.sh <<ANSWERS
+          4
+          y
+          ANSWERS
+
+          sudo netstat -anpu | grep ':51820' && exit 1
+          rm -f ~/client*.conf
+
+          sudo bash wireguard.sh <<ANSWERS
+
+
+
+
+          ANSWERS
+
+          sudo netstat -anpu | grep ':51820'
+          sudo systemctl status wg-quick@wg0
+          ls -ld ~/client.conf
+
+          sudo bash wireguard.sh <<ANSWERS
+          4
+          y
+          ANSWERS
+
+          sudo netstat -anpu | grep ':51820' && exit 1
+          rm -f ~/client*.conf

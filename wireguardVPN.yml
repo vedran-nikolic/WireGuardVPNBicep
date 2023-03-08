@@ -1,0 +1,4 @@
+#cloud-config
+runcmd:
+  - wget -O wireguard.sh https://get.vpnsetup.net/wg
+  - sudo bash wireguard.sh --auto 

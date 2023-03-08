@@ -1,0 +1,17 @@
+#
+# Copyright (C) 2023 Vedran Nikolić <vedran.nikolic@proxiprojekt.hr>
+
+name: build
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - '**.sh'
+      - '.github/workflows/main.yml'
+      - '.github/workflows/test.yml'
+
+jobs:
+  test:
+    if: github.repository_owner == 'vedran-nikolic'
+    uses: ./.github/workflows/test.yml
